@@ -92,9 +92,11 @@
 					.attr({fill:_color, stroke:'none'});
 				paper.text(self.options.width / 2, self.options.density[1] * (i + 1) + 8, _net.name)
 					.attr({'fill': '#fff','font-size':'12px'});
-				
-				paper.text(0, self.options.density[1] * (i + 1) + transverse + 10, _net.ip.join(' '))
+				for (var k = 0, _ip_len = _net.ip.length; k < _ip_len; k++) {
+					paper.text(k * 100, self.options.density[1] * (i + 1) + transverse + 10, _net.ip[k])
 					.attr({'fill': '#000','font-size':'12px', 'text-anchor':'start'});
+				}
+				
 			}
 			var set = paper.setFinish();
 			return set;
@@ -129,16 +131,13 @@
 				IMAGE_BG_WIDTH = 99,
 				IMAGE_ROUTER_WIDTH = 60,
 				STRIP_WIDTH = 7,
-				_distance = self.size[0] / len,
-				_offset = isLean ? (_distance - IMAGE_ROUTER_WIDTH) / 2 : (_distance - IMAGE_BG_WIDTH - IMAGE_ROUTER_WIDTH) / 2,
-				posY = (density[1] - IMAGE_HEIGHT + transverse) / 2;
-
+				posY = (density[1] - IMAGE_HEIGHT + transverse) / 2,
+				xArray = self.util.division(isLean ? IMAGE_ROUTER_WIDTH : IMAGE_ROUTER_WIDTH + IMAGE_BG_WIDTH, len, self.size[0]);
 			paper.setStart();
 			for (var i = 0; i < len; i++) {
-				var router = data.routers[i];
-				var posX = (_offset + _distance * i);
-				var link = router.link;
-				console.log(link)
+				var router = data.routers[i],
+					posX = xArray[i],
+					link = router.link;
 
 				paper.rect(posX + (IMAGE_ROUTER_WIDTH - STRIP_WIDTH) / 2, 5, STRIP_WIDTH, posY + 5)
 					.attr({fill: options.nova_color, stroke:'none'});
@@ -158,14 +157,39 @@
 		},
 
 		// Return all the server elems
-		_drawServer: function(paper) {
+		_drawServer: function(paper, data) {
+			var self = this,
+				isLean = self.isLean,
+				len = data.servers.length,
+				IMAGE_BG = './img/bg.png',
+				IMAGE_SERVER = './img/server.png',
+				IMAGE_HEIGHT = 75,
+				IMAGE_BG_WIDTH = 99,
+				IMAGE_SERVER_WIDTH = 60,
+				STRIP_WIDTH = 7;
+
+			console.log(data.servers)
+			var serverGroup = {};
+			for (var k in data.servers) {
+				var link = data.servers[k].link,
+					key = link[0]['net_index'];
+				serverGroup[key] = serverGroup[key] ? ++serverGroup[key] : 1;
+			}
+
 			paper.setStart();
-			paper.image('./img/bg.png', 560, 250, 99, 75);
+
+			for (var i in serverGroup) {
+				var xArray = self.util.division(isLean ? IMAGE_SERVER_WIDTH : IMAGE_SERVER_WIDTH + IMAGE_BG_WIDTH, serverGroup[i], self.size[0]);
+				console.log(xArray)
+
+			}
+
+			paper.image(IMAGE_BG, 560, 250, 99, 75);
 			paper.text(615, 275,'server_name\nserver1')
 				.attr({'font-size':'12px'});
 			paper.text(615, 312,'server')
 				.attr({'font-size':'12px', 'fill':'#fff'});
-			paper.image('./img/server.png', 510, 250, 60, 75);
+			paper.image(IMAGE_SERVER, 510, 250, 60, 75);
 			var set = paper.setFinish();
 			
 			return set;
@@ -232,7 +256,16 @@
 			pos[0] = pos[0] > dimension[2] ? dimension[2] : pos[0];
 			pos[1] = pos[1] > dimension[3] ? dimension[3] : pos[1];
 			return pos;
+		},
+		division: function(sep, num, width) {
+			var tmp = [],
+				offset = (width / num - sep) / 2;
+			for (var i = 0; i < num; i++) {
+				tmp.push(offset + width / num *i);
+			}
+			return tmp;
 		}
+
 	}
 
 	if (typeof window === "object" && typeof window.document === "object") {
