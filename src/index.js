@@ -11,7 +11,10 @@
 
 	var VERSION = '0.1',
 		defaults = {
-			space: 200,
+			density: [190, 200],
+			lean: 120, // Space under lean-mode
+			transverse: 19,
+			radius: 3,
 			speed: 600,
 			easing: 'linear',
 			nova_color: '#86ba32',
@@ -34,14 +37,13 @@
 		init: function(dom, data, options) {
 			var self = this;
 			self.options = options;
-			console.log(self.options)
-			self._calculate(data, options);
+			self._calculate(data);
 			self._createCanvas(dom, options.width, options.height, function() { // Callback
-				self._drawAssociation(this);
+				self._drawRouter(this, data);
+				self._drawServer(this, data);
 				self._drawNova(this);
 				self._drawSubNet(this, data);
-				self._drawRouter(this);
-				self._drawServer(this);
+
 				self._drawMask(this);
 				self._listen(this);
 			});
@@ -80,19 +82,18 @@
 		_drawSubNet: function(paper, data) {
 			var self = this,
 				RADIUS = 3,
-				STRIPE = 19;
+				transverse = 19;
 
 			paper.setStart();
 			for (var i = 0, _net_len = data.subnets.length; i < _net_len; i++) {
 				var _net = data.subnets[i];
-				var _color = self.options.color.shift();
-				self.options.color.push(_color);
-				paper.rect(0, self.options.space * (i + 1), self.size[0], STRIPE, RADIUS)
+				var _color = self.options.color[i % self.options.color.length];
+				paper.rect(0, self.options.density[1] * (i + 1), self.size[0], transverse, RADIUS)
 					.attr({fill:_color, stroke:'none'});
-				paper.text(self.options.width / 2, self.options.space * (i + 1) + 8, _net.name)
+				paper.text(self.options.width / 2, self.options.density[1] * (i + 1) + 8, _net.name)
 					.attr({'fill': '#fff','font-size':'12px'});
 				
-				paper.text(0, self.options.space * (i + 1) + STRIPE + 10, _net.ip.join(' '))
+				paper.text(0, self.options.density[1] * (i + 1) + transverse + 10, _net.ip.join(' '))
 					.attr({'fill': '#000','font-size':'12px', 'text-anchor':'start'});
 			}
 			var set = paper.setFinish();
@@ -102,11 +103,11 @@
 		_drawNova: function(paper) {
 			var self = this,
 				RADIUS = 3,
-				STRIPE = 19,
+				transverse = 19,
 				DESC = 'nova(external)';
 
 			paper.setStart();
-			paper.rect(0, 0, self.size[0], STRIPE, RADIUS)
+			paper.rect(0, 0, self.size[0], transverse, RADIUS)
 				.attr({fill: self.options.nova_color, stroke: 'none'});
 			paper.text(self.size[0] / 2, 9, DESC)
 				.attr({'fill': '#fff','font-size':'12px'});
@@ -115,19 +116,44 @@
 		},
 
 		// Return router elems
-		_drawRouter: function(paper) {
+		_drawRouter: function(paper, data) {
+			var self = this,
+				options = self.options,
+				density = options.density,
+				transverse = options.transverse,
+				isLean = self.isLean,
+				len = data.routers.length,
+				IMAGE_BG = './img/bg.png',
+				IMAGE_ROUTER = './img/router.png',
+				IMAGE_HEIGHT = 75,
+				IMAGE_BG_WIDTH = 99,
+				IMAGE_ROUTER_WIDTH = 60,
+				STRIP_WIDTH = 7,
+				_distance = self.size[0] / len,
+				_offset = isLean ? (_distance - IMAGE_ROUTER_WIDTH) / 2 : (_distance - IMAGE_BG_WIDTH - IMAGE_ROUTER_WIDTH) / 2,
+				posY = (density[1] - IMAGE_HEIGHT + transverse) / 2;
+
 			paper.setStart();
+			for (var i = 0; i < len; i++) {
+				var router = data.routers[i];
+				var posX = (_offset + _distance * i);
+				var link = router.link;
+				console.log(link)
 
-			
-			paper.image('./img/bg.png', 160, 70, 99, 75);
-			paper.text(215, 95,'router_name\nrouter1')
-				.attr({'font-size':'12px'});
-			paper.text(215, 132,'router')
-				.attr({'font-size':'12px', 'fill':'#fff'});
-			paper.image('./img/router.png', 110, 70, 60, 75);
-
+				paper.rect(posX + (IMAGE_ROUTER_WIDTH - STRIP_WIDTH) / 2, 5, STRIP_WIDTH, posY + 5)
+					.attr({fill: options.nova_color, stroke:'none'});
+				paper.rect(posX + (IMAGE_ROUTER_WIDTH - STRIP_WIDTH) / 2, posY + IMAGE_HEIGHT - 5, STRIP_WIDTH, posY + link.net_index * options.density[1] - 5)
+					.attr({fill: options.color[link.net_index % options.color.length], stroke:'none'});
+				paper.text(posX + 40, posY + IMAGE_HEIGHT + 25, link.ip)
+					.attr({'font-size':'10px', 'text-anchor':'start'});
+				paper.image(IMAGE_BG, posX + IMAGE_ROUTER_WIDTH - 10, posY, IMAGE_BG_WIDTH, IMAGE_HEIGHT);
+				paper.text(posX + 104, posY + 28, router.name)
+					.attr({'font-size':'12px'});
+				paper.text(posX + 104, posY + 62, 'router')
+					.attr({'font-size':'12px', 'fill':'#fff'});
+				paper.image(IMAGE_ROUTER, posX, posY, IMAGE_ROUTER_WIDTH, IMAGE_HEIGHT);
+			}
 			var set = paper.setFinish();
-			
 			return set;
 		},
 
@@ -145,17 +171,6 @@
 			return set;
 		},
 
-		// Return all the association elems
-		_drawAssociation: function(paper) {
-			paper.setStart();
-			paper.rect(136, 0, 7, 70)
-				.attr({fill:'#86ba32', stroke:'none'});
-			paper.rect(206, 120, 7, 70)
-				.attr({fill:'#00b3b2', stroke:'none'});
-			var set = paper.setFinish();
-			return set;
-		},
-
 		// Create a mask to capture event handler
 		_drawMask: function(paper) {
 			var self = this;
@@ -165,19 +180,20 @@
 		},
 
 		// Calculate coordinates
-		_calculate: function(data, options) {
+		_calculate: function(data) {
 			var self = this,
-				size = self._calSize(data, options);
+				size = self._calSize(data);
 			//console.log(_width)
 		},
 
-		_calSize: function(data, options) {
-			console.log(data);
+		_calSize: function(data) {
+			//console.log(data);
 			var self = this,
+				options = self.options,
 				lenArray = {}, // Save key-value array for calculating width automatically
 				key = '',
 				width = 0,
-				height = (data.subnets.length + 1) * options.space,
+				height = (data.subnets.length + 1) * options.density[1],
 				max = data.routers.length; // initialize max-value
 			for (var i in data.servers) {
 				var link = data.servers[i].link,
@@ -189,7 +205,16 @@
 					lenArray[key] = 1;
 				}
 			}
-			width = max * options.space <= options.width ? options.width : max*options.space;
+
+			// Automatically calculate width and layout mode
+			if (options.lean * max >= options.width) {
+				width = options.lean * max;
+				self.isLean = true; // Layout mode
+			} else {
+				self.isLean = options.density[0] * max <= options.width ? false : true;
+				width = options.width;
+			}
+
 			return this.size = [width, height];
 		}
 
