@@ -12,7 +12,7 @@
 	var VERSION = '0.1',
 		defaults = {
 			density: [190, 200],
-			lean: 150, // Space under lean-mode
+			lean: 100, // Space under lean-mode
 			transverse: 19,
 			radius: 3,
 			speed: 600,
@@ -36,7 +36,7 @@
 	
 	TP.fn = TP.prototype = {
 		// Current version of TP
- 		TP: VERSION,
+ 		version: VERSION,
 
 		constructor: TP,
 
@@ -45,6 +45,7 @@
 			self.options = options;
 			self._calSize(data);
 			self._createCanvas(dom, options.width, options.height, function() { // Callback
+				
 				self._drawRouter(this, data);
 				self._drawServer(this, data);
 				self._drawNova(this);
@@ -75,6 +76,22 @@
 			});
 
 			// Support touch event
+			if (self.isLean) {
+				self.routerSet.hover(function() {
+					var set = paper.set();
+					set.push(this.prev);
+					set.push(this.prev.prev);
+					set.push(this.prev.prev.prev);
+					set.animate({'opacity': 1}, self.options.speed);
+				}, function() {
+					var set = paper.set();
+					set.push(this.prev);
+					set.push(this.prev.prev);
+					set.push(this.prev.prev.prev);
+					set.animate({'opacity': 0}, self.options.speed);
+				});
+			}
+			
 
 		},
 
@@ -137,9 +154,10 @@
 				IMAGE_BG_WIDTH = 99,
 				IMAGE_ROUTER_WIDTH = 60,
 				STRIP_WIDTH = 7,
+				opacity = isLean ? 0 : 1,
 				posY = (density[1] - IMAGE_HEIGHT + transverse) / 2,
 				xArray = self.util.division(isLean ? IMAGE_ROUTER_WIDTH : IMAGE_ROUTER_WIDTH + IMAGE_BG_WIDTH, len, self.size[0]);
-			paper.setStart();
+			var set = paper.set();
 			for (var i = 0; i < len; i++) {
 				var router = data.routers[i],
 					posX = xArray[i],
@@ -151,16 +169,19 @@
 					STRIP_WIDTH, posY + link.net_index * options.density[1] - 5)
 					.attr({fill: options.color[link.net_index % options.color.length], stroke:'none'});
 				paper.text(posX + 40, posY + IMAGE_HEIGHT + 25, link.ip)
-					.attr({'font-size':'10px', 'text-anchor':'start'});
-				paper.image(IMAGE_BG, posX + IMAGE_ROUTER_WIDTH - 10, posY, IMAGE_BG_WIDTH, IMAGE_HEIGHT);
+					.attr({'font-size': '10px', 'text-anchor': 'start'});
+				paper.image(IMAGE_BG, posX + IMAGE_ROUTER_WIDTH - 10, posY, IMAGE_BG_WIDTH, IMAGE_HEIGHT)
+					.attr({'opacity': opacity});
 				paper.text(posX + 104, posY + 28, router.name)
-					.attr({'font-size':'12px'});
+					.attr({'font-size': '12px', 'opacity': opacity});
 				paper.text(posX + 104, posY + 62, 'router')
-					.attr({'font-size':'12px', 'fill':'#fff'});
-				paper.image(IMAGE_ROUTER, posX, posY, IMAGE_ROUTER_WIDTH, IMAGE_HEIGHT);
+					.attr({'font-size':'12px', 'fill':'#fff', 'opacity': opacity});
+				var router = paper.image(IMAGE_ROUTER, posX, posY, IMAGE_ROUTER_WIDTH, IMAGE_HEIGHT)
+					.attr({'cursor': 'pointer'});
+				set.push(router);
 			}
-			var set = paper.setFinish();
-			return set;
+
+			return self.routerSet = set;
 		},
 
 		// Return all the server elems
@@ -178,6 +199,7 @@
 				IMAGE_SERVER_WIDTH = 60,
 				STRIP_WIDTH = 7,
 				cursor = 0,
+				opacity = isLean ? 0 : 1,
 				link_height = (options.density[1] - IMAGE_HEIGHT + transverse) / 2;
 			var serverGroup = {};
 			for (var k in servers) {
@@ -207,12 +229,14 @@
 								.attr({fill: options.color[servers[cursor].link[n].net_index % options.color.length], stroke:'none'});
 						} 
 					};
-					paper.image(IMAGE_BG, xArray[index] + IMAGE_SERVER_WIDTH - 10, server_height , IMAGE_BG_WIDTH, IMAGE_HEIGHT);
+					paper.image(IMAGE_BG, xArray[index] + IMAGE_SERVER_WIDTH - 10, server_height , IMAGE_BG_WIDTH, IMAGE_HEIGHT)
+						.attr({'opacity': opacity});
 					paper.text(xArray[index] + 104, server_height + 28, servers[cursor].name)
-						.attr({'font-size':'12px'});
+						.attr({'font-size':'12px', 'opacity': opacity});
 					paper.text(xArray[index] + 104, server_height + 62, 'server')
-						.attr({'font-size':'12px', 'fill':'#fff'});
-					paper.image(IMAGE_SERVER, xArray[index], server_height, IMAGE_SERVER_WIDTH, IMAGE_HEIGHT);
+						.attr({'font-size':'12px', 'fill':'#fff', 'opacity': opacity});
+					paper.image(IMAGE_SERVER, xArray[index], server_height, IMAGE_SERVER_WIDTH, IMAGE_HEIGHT)
+						.attr({'cursor': 'pointer'});
 					++cursor;
 				}
 				
@@ -227,12 +251,8 @@
 			var self = this;
 			var mask = paper.rect(0, 0, self.size[0], self.size[1])
 				.attr({opacity: 0, fill: '#fff', 'stroke-width': 0});
+			mask.toBack();
 			return self.mask = mask;
-		},
-
-		// Remove svg elem
-		remove: function() {
-
 		},
 
 		// Calculate coordinates
