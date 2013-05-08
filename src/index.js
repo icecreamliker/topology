@@ -78,17 +78,39 @@
 			// Support touch event
 			if (self.isLean) {
 				self.routerSet.hover(function() {
+					var _id = this.id - 3;
 					var set = paper.set();
-					set.push(this.prev);
-					set.push(this.prev.prev);
-					set.push(this.prev.prev.prev);
-					set.animate({'opacity': 1}, self.options.speed);
+					set.push(paper.getById(_id));
+					set.push(paper.getById(++_id));
+					set.push(paper.getById(++_id));
+					set.toFront();
+					this.toFront();
+					set.show().animate({'opacity': 1}, self.options.speed);
 				}, function() {
+					var _id = this.id - 3;
 					var set = paper.set();
-					set.push(this.prev);
-					set.push(this.prev.prev);
-					set.push(this.prev.prev.prev);
-					set.animate({'opacity': 0}, self.options.speed);
+					set.push(paper.getById(_id));
+					set.push(paper.getById(++_id));
+					set.push(paper.getById(++_id));
+					set.animate({'opacity': 0}, self.options.speed).hide();
+				});
+
+				self.serverSet.hover(function() {
+					var _id = this.id - 3;
+					var set = paper.set();
+					set.push(paper.getById(_id));
+					set.push(paper.getById(++_id));
+					set.push(paper.getById(++_id));
+					set.toFront();
+					this.toFront();
+					set.show().animate({'opacity': 1}, self.options.speed);
+				}, function() {
+					var _id = this.id - 3;
+					var set = paper.set();
+					set.push(paper.getById(_id));
+					set.push(paper.getById(++_id));
+					set.push(paper.getById(++_id));
+					set.animate({'opacity': 0}, self.options.speed).hide();
 				});
 			}
 			
@@ -207,7 +229,7 @@
 					key = link[0].net_index;
 				serverGroup[key] = serverGroup[key] ? ++serverGroup[key] : 1;
 			}
-			paper.setStart();
+			var set = paper.set();
 			for (var i in serverGroup) {
 				var self = this,
 					i = Number(i),
@@ -235,15 +257,15 @@
 						.attr({'font-size':'12px', 'opacity': opacity});
 					paper.text(xArray[index] + 104, server_height + 62, 'server')
 						.attr({'font-size':'12px', 'fill':'#fff', 'opacity': opacity});
-					paper.image(IMAGE_SERVER, xArray[index], server_height, IMAGE_SERVER_WIDTH, IMAGE_HEIGHT)
+					var server = paper.image(IMAGE_SERVER, xArray[index], server_height, IMAGE_SERVER_WIDTH, IMAGE_HEIGHT)
 						.attr({'cursor': 'pointer'});
+					set.push(server);
 					++cursor;
 				}
 				
 
 			}
-			var set = paper.setFinish();
-			return set;
+			return self.serverSet = set;
 		},
 
 		// Create a mask to capture event handler
@@ -310,8 +332,6 @@
 		//		tmp.push(offset + width / num *i);
 				tmp.push(offset + i * (offset + sep))
 			}
-
-			console.log(tmp)
 			return tmp;
 		}
 
