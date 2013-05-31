@@ -45,12 +45,11 @@
 			self.options = options;
 			self._calSize(data);
 			self._createCanvas(dom, options.width, options.height, function() { // Callback
-				
-				self._drawRouter(this, data);
-				self._drawServer(this, data);
+				self._drawMask(this);
 				self._drawNova(this);
 				self._drawSubNet(this, data);
-				self._drawMask(this);
+				self._drawServer(this, data);
+				self._drawRouter(this, data);
 				self._listen(this);
 			});
 
@@ -78,39 +77,39 @@
 			// Support touch event
 			if (self.isLean) {
 				self.routerSet.hover(function() {
-					var _id = this.id - 3;
+					var _id = this.id - 1;
 					var set = paper.set();
 					set.push(paper.getById(_id));
-					set.push(paper.getById(++_id));
-					set.push(paper.getById(++_id));
+					set.push(paper.getById(--_id));
+					set.push(paper.getById(--_id));
 					set.toFront();
 					this.toFront();
-					set.show().animate({'opacity': 1}, self.options.speed);
+					set.animate({'opacity': 1}, self.options.speed);
 				}, function() {
-					var _id = this.id - 3;
+					var _id = this.id - 1;
 					var set = paper.set();
 					set.push(paper.getById(_id));
-					set.push(paper.getById(++_id));
-					set.push(paper.getById(++_id));
-					set.animate({'opacity': 0}, self.options.speed).hide();
+					set.push(paper.getById(--_id));
+					set.push(paper.getById(--_id));
+					set.animate({'opacity': 0}, self.options.speed);
 				});
 
 				self.serverSet.hover(function() {
-					var _id = this.id - 3;
+					var _id = this.id - 1;
 					var set = paper.set();
 					set.push(paper.getById(_id));
-					set.push(paper.getById(++_id));
-					set.push(paper.getById(++_id));
+					set.push(paper.getById(--_id));
+					set.push(paper.getById(--_id));
 					set.toFront();
 					this.toFront();
-					set.show().animate({'opacity': 1}, self.options.speed);
+					set.animate({'opacity': 1}, self.options.speed);
 				}, function() {
-					var _id = this.id - 3;
+					var _id = this.id - 1;
 					var set = paper.set();
 					set.push(paper.getById(_id));
-					set.push(paper.getById(++_id));
-					set.push(paper.getById(++_id));
-					set.animate({'opacity': 0}, self.options.speed).hide();
+					set.push(paper.getById(--_id));
+					set.push(paper.getById(--_id));
+					set.animate({'opacity': 0}, self.options.speed);
 				});
 			}
 			
@@ -133,13 +132,13 @@
 			for (var i = 0, _net_len = data.subnets.length; i < _net_len; i++) {
 				var _net = data.subnets[i];
 				var _color = self.options.color[i % self.options.color.length];
-				paper.rect(0, self.options.density[1] * (i + 1), self.size[0], transverse, RADIUS)
-					.attr({fill:_color, stroke:'none'});
 				paper.text(self.options.width / 2, self.options.density[1] * (i + 1) + 8, _net.name)
-					.attr({'fill': '#fff','font-size':'12px'});
+					.attr({'fill': '#fff','font-size':'12px'}).toBack();
+				paper.rect(0, self.options.density[1] * (i + 1), self.size[0], transverse, RADIUS)
+					.attr({fill:_color, stroke:'none'}).toBack();
 				for (var k = 0, _ip_len = _net.ip.length; k < _ip_len; k++) {
-					paper.text(k * 100, self.options.density[1] * (i + 1) + transverse + 10, _net.ip[k])
-					.attr({'fill': '#000','font-size':'12px', 'text-anchor':'start'});
+					paper.text(k * 100, self.options.density[1] * (i + 1) + transverse + 13, _net.ip[k])
+					.attr({'fill': '#000','font-size':'15px', 'text-anchor':'start'}).toBack();
 				}
 				
 			}
@@ -154,10 +153,12 @@
 				DESC = 'nova(external)';
 
 			paper.setStart();
-			paper.rect(0, 0, self.size[0], transverse, RADIUS)
-				.attr({fill: self.options.nova_color, stroke: 'none'});
 			paper.text(self.options.width / 2, 9, DESC)
-				.attr({'fill': '#fff','font-size':'12px'});
+				.attr({'fill': '#fff','font-size':'12px'})
+				.toBack();
+			paper.rect(0, 0, self.size[0], transverse, RADIUS)
+				.attr({fill: self.options.nova_color, stroke: 'none'})
+				.toBack();
 			var set = paper.setFinish();
 			return set;
 		},
@@ -179,25 +180,25 @@
 				opacity = isLean ? 0 : 1,
 				posY = (density[1] - IMAGE_HEIGHT + transverse) / 2,
 				xArray = self.util.division(isLean ? IMAGE_ROUTER_WIDTH : IMAGE_ROUTER_WIDTH + IMAGE_BG_WIDTH, len, self.size[0]);
+
 			var set = paper.set();
 			for (var i = 0; i < len; i++) {
 				var router = data.routers[i],
 					posX = xArray[i],
 					link = router.link;
-
 				paper.rect(posX + (IMAGE_ROUTER_WIDTH - STRIP_WIDTH) / 2, 5, STRIP_WIDTH, posY + 5)
-					.attr({fill: options.nova_color, stroke:'none'});
+					.attr({fill: options.nova_color, stroke:'none'}).toBack();
 				paper.rect(posX + (IMAGE_ROUTER_WIDTH - STRIP_WIDTH) / 2, posY + IMAGE_HEIGHT - 5, 
 					STRIP_WIDTH, posY + link.net_index * options.density[1] - 5)
-					.attr({fill: options.color[link.net_index % options.color.length], stroke:'none'});
+					.attr({fill: options.color[link.net_index % options.color.length], stroke:'none'}).toBack();
 				paper.text(posX + 40, posY + IMAGE_HEIGHT + 25, link.ip)
-					.attr({'font-size': '10px', 'text-anchor': 'start'});
-				paper.image(IMAGE_BG, posX + IMAGE_ROUTER_WIDTH - 10, posY, IMAGE_BG_WIDTH, IMAGE_HEIGHT)
-					.attr({'opacity': opacity});
+					.attr({'font-size': '12px', 'text-anchor': 'start'}).toBack();
 				paper.text(posX + 104, posY + 28, router.name)
-					.attr({'font-size': '12px', 'opacity': opacity});
+					.attr({'font-size': '12px', 'opacity': opacity}).toBack();
 				paper.text(posX + 104, posY + 62, 'router')
-					.attr({'font-size':'12px', 'fill':'#fff', 'opacity': opacity});
+					.attr({'font-size':'12px', 'fill':'#fff', 'opacity': opacity}).toBack();
+				paper.image(IMAGE_BG, posX + IMAGE_ROUTER_WIDTH - 10, posY, IMAGE_BG_WIDTH, IMAGE_HEIGHT)
+					.attr({'opacity': opacity}).toBack();
 				var router = paper.image(IMAGE_ROUTER, posX, posY, IMAGE_ROUTER_WIDTH, IMAGE_HEIGHT)
 					.attr({'cursor': 'pointer'});
 				set.push(router);
@@ -241,22 +242,33 @@
 						if (n === 0) {
 							paper.rect(xArray[index] + (IMAGE_SERVER_WIDTH - STRIP_WIDTH) / 2, 
 								options.density[1]*(i + 1) + 5, STRIP_WIDTH, link_height)
-								.attr({fill: options.color[i % options.color.length], stroke:'none'});
+								.attr({fill: options.color[i % options.color.length], stroke:'none'})
+								.toBack();
+							paper.text(xArray[index] + (IMAGE_SERVER_WIDTH - STRIP_WIDTH) / 2 + 10, 
+								 options.density[1]*(i + 1.25) - 0.25*IMAGE_HEIGHT + 15, servers[cursor].link[0].ip)
+								.attr({'font-size':'12px', 'text-anchor': 'start'})
+								.toBack();
 						} else {
 							var offset_height = options.density[1] * (servers[cursor].link[n].net_index - i - 1);
-							var ticks = self.util.division(STRIP_WIDTH, _link_len - 1, IMAGE_SERVER_WIDTH);
-							paper.rect(xArray[index] + ticks[n- 1], 
+							var ticksX = self.util.division(STRIP_WIDTH, _link_len - 1, IMAGE_SERVER_WIDTH);
+							var ticksY = self.util.division(0, _link_len - 1, (options.density[1] - IMAGE_HEIGHT) / 2);
+							paper.rect(xArray[index] + ticksX[n- 1], 
 								options.density[1]*(i + 1.5) + (options.transverse + IMAGE_HEIGHT) / 2 , 
 								STRIP_WIDTH, link_height + offset_height)
-								.attr({fill: options.color[servers[cursor].link[n].net_index % options.color.length], stroke:'none'});
+								.attr({fill: options.color[servers[cursor].link[n].net_index % options.color.length], stroke:'none'})
+								.toBack();
+							paper.text(xArray[index] + ticksX[n- 1] + 10, 
+								 options.density[1] * (i + 1.5) + 0.5 * IMAGE_HEIGHT + ticksY[n-1] + 5, servers[cursor].link[n].ip)
+								.attr({'font-size':'12px', 'text-anchor': 'start'})
+								.toBack();
 						} 
 					};
-					paper.image(IMAGE_BG, xArray[index] + IMAGE_SERVER_WIDTH - 10, server_height , IMAGE_BG_WIDTH, IMAGE_HEIGHT)
-						.attr({'opacity': opacity});
 					paper.text(xArray[index] + 104, server_height + 28, servers[cursor].name)
-						.attr({'font-size':'12px', 'opacity': opacity});
+						.attr({'font-size':'12px', 'opacity': opacity}).toBack();
 					paper.text(xArray[index] + 104, server_height + 62, 'server')
-						.attr({'font-size':'12px', 'fill':'#fff', 'opacity': opacity});
+						.attr({'font-size':'12px', 'fill':'#fff', 'opacity': opacity}).toBack();
+					paper.image(IMAGE_BG, xArray[index] + IMAGE_SERVER_WIDTH - 10, server_height , IMAGE_BG_WIDTH, IMAGE_HEIGHT)
+						.attr({'opacity': opacity}).toBack();
 					var server = paper.image(IMAGE_SERVER, xArray[index], server_height, IMAGE_SERVER_WIDTH, IMAGE_HEIGHT)
 						.attr({'cursor': 'pointer'});
 					set.push(server);
@@ -273,7 +285,6 @@
 			var self = this;
 			var mask = paper.rect(0, 0, self.size[0], self.size[1])
 				.attr({opacity: 0, fill: '#fff', 'stroke-width': 0});
-			mask.toBack();
 			return self.mask = mask;
 		},
 
@@ -317,6 +328,7 @@
 
 	// Utils
 	TP.fn.util = {
+		// Correct the offset
 		rebound: function(pos, dimension) {
 			pos[0] = pos[0] < dimension[0] ? dimension[0] : pos[0];
 			pos[1] = pos[1] < dimension[1] ? dimension[1] : pos[1];
@@ -326,14 +338,13 @@
 		},
 		division: function(sep, num, width) {
 			var tmp = [],
-		//		offset = (width / num - sep) / 2;
 				offset = (width - sep * num) / (num + 1);
 			for (var i = 0; i < num; i++) {
-		//		tmp.push(offset + width / num *i);
 				tmp.push(offset + i * (offset + sep))
 			}
 			return tmp;
-		}
+		},
+
 
 	}
 
