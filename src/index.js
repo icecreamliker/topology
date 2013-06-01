@@ -12,7 +12,7 @@
 	var VERSION = '0.1',
 		defaults = {
 			density: [190, 200],
-			lean: 100, // Space under lean-mode
+			lean: 100,
 			transverse: 19,
 			radius: 3,
 			speed: 600,
@@ -45,6 +45,7 @@
 			self.options = options;
 			self._calSize(data);
 			self._createCanvas(dom, options.width, options.height, function() { // Callback
+				self.paper = this;
 				self._drawMask(this);
 				self._drawNova(this);
 				self._drawSubNet(this, data);
@@ -58,62 +59,66 @@
 
 		_listen: function(paper) {
 			var self = this;
-			// it show be more detailed
-			self.offset = [0, 0];
 			// Support drag event
-			self.mask.drag(function(dx, dy, x, y, ev) {
-				var width = self.options.width,
-					height = self.options.height;
-				var pos = self.util.rebound([self.offset[0] + dx, self.offset[1] + dy], 
-						[width - self.size[0], height - self.size[1], 0, 0]);
-				self.pos = pos;
-				paper.setViewBox(-pos[0], -pos[1], width, height);
-			}, function(x, y, ev) {
-
+			self.offset = [0, 0];
+			self.mask.drag($.proxy(self._drag, self), function(x, y, ev) {
+			
 			}, function(ev) {
 				self.offset = self.pos;
 			});
 
-			// Support touch event
 			if (self.isLean) {
 				self.routerSet.hover(function() {
-					var _id = this.id - 1;
-					var set = paper.set();
-					set.push(paper.getById(_id));
-					set.push(paper.getById(--_id));
-					set.push(paper.getById(--_id));
-					set.toFront();
-					this.toFront();
-					set.animate({'opacity': 1}, self.options.speed);
+					self._mouseOver(this, self);
 				}, function() {
-					var _id = this.id - 1;
-					var set = paper.set();
-					set.push(paper.getById(_id));
-					set.push(paper.getById(--_id));
-					set.push(paper.getById(--_id));
-					set.animate({'opacity': 0}, self.options.speed);
+					self._mouseOut(this, self);
 				});
-
 				self.serverSet.hover(function() {
-					var _id = this.id - 1;
-					var set = paper.set();
-					set.push(paper.getById(_id));
-					set.push(paper.getById(--_id));
-					set.push(paper.getById(--_id));
-					set.toFront();
-					this.toFront();
-					set.animate({'opacity': 1}, self.options.speed);
+					self._mouseOver(this, self);
 				}, function() {
-					var _id = this.id - 1;
-					var set = paper.set();
-					set.push(paper.getById(_id));
-					set.push(paper.getById(--_id));
-					set.push(paper.getById(--_id));
-					set.animate({'opacity': 0}, self.options.speed);
+					self._mouseOut(this, self);
 				});
 			}
-			
+		},
 
+		_drag: function(dx, dy, x, y, ev) {
+			var self = this;
+			var width = self.options.width,
+				height = self.options.height;
+			var pos = self.util.rebound([self.offset[0] + dx, self.offset[1] + dy], 
+					[width - self.size[0], height - self.size[1], 0, 0]);
+			self.pos = pos;
+			self.paper.setViewBox(-pos[0], -pos[1], width, height);
+		},
+
+		_mouseOver: function(context, glob) {
+			var self = context,
+				paper = glob.paper;
+			if(!glob.mouseovered || glob.mouseovered == false) {
+				glob.mouseovered = true;
+				var _id = self.id - 1;
+				var set = paper.set();
+				set.push(paper.getById(_id));
+				set.push(paper.getById(--_id));
+				set.push(paper.getById(--_id));
+				set.toFront();
+				self.toFront();
+				set.show().animate({'opacity': 1}, glob.options.speed);
+			}
+		},
+
+		_mouseOut: function(context, glob) {
+			glob.mouseovered = false;
+			var self = context,
+				paper = glob.paper;
+			var _id = self.id - 1;
+			var set = paper.set();
+			set.push(paper.getById(_id));
+			set.push(paper.getById(--_id));
+			set.push(paper.getById(--_id));
+			set.animate({'opacity': 0}, glob.options.speed, function() {
+				set.hide();
+			});
 		},
 
 		_createCanvas: function(dom, width, height, callback) {
@@ -343,9 +348,7 @@
 				tmp.push(offset + i * (offset + sep))
 			}
 			return tmp;
-		},
-
-
+		}
 	}
 
 	if (typeof window === "object" && typeof window.document === "object") {
