@@ -2,7 +2,7 @@
  * Author: Lee Yao<yaoli@unitedstack.com>
  * Created: 2013-4-9
  * Description: topology component
- * Update: 2013-5-7
+ * Update: 2013-6-1
  *******************************************/
 
 (function($, Raphael) {
@@ -23,22 +23,22 @@
 
 	/**
 	 * Vitual network topology module based on Raphael
-	 * @module TP
+	 * @module VirtualNT
 	 * @param {String} dom which contains the svg graphics
 	 * @param {Object} topology data
 	 * @param {Object} options are used to customise styles of graphics
 	 * @returns {Object}
 	 */
-	var TP = function(dom, data, options) {
+	var VirtualNT = function(dom, data, options) {
 		options = $.extend(defaults, options);	
-		return new TP.fn.init(dom, data, options);
+		return new VirtualNT.fn.init(dom, data, options);
 	}
 	
-	TP.fn = TP.prototype = {
-		// Current version of TP
+	VirtualNT.fn = VirtualNT.prototype = {
+		// Current version of VirtualNT
  		version: VERSION,
 
-		constructor: TP,
+		constructor: VirtualNT,
 
 		init: function(dom, data, options) {
 			var self = this;
@@ -328,11 +328,11 @@
 
 	};
 
-	// Deliver the init function to the TP prototype for instantiation
-	TP.fn.init.prototype = TP.fn;
+	// Deliver the init function to the VirtualNT prototype for instantiation
+	VirtualNT.fn.init.prototype = VirtualNT.fn;
 
 	// Utils
-	TP.fn.util = {
+	VirtualNT.fn.util = {
 		// Correct the offset
 		rebound: function(pos, dimension) {
 			pos[0] = pos[0] < dimension[0] ? dimension[0] : pos[0];
@@ -352,6 +352,6 @@
 	}
 
 	if (typeof window === "object" && typeof window.document === "object") {
-		window.TP = TP;	
+		window.VirtualNT = VirtualNT;	
 	}
 })(jQuery, Raphael);
